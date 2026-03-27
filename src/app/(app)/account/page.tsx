@@ -3,26 +3,54 @@ import { BadgeCheck, Bot, DatabaseZap, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+type IntegrationStatus = "connected" | "server-managed" | "pending";
+
 const integrations = [
   {
     title: "Convex deployment",
     body: "Database, auth, and report persistence.",
-    ready: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
+    status: process.env.NEXT_PUBLIC_CONVEX_URL ? "connected" : "pending",
     icon: DatabaseZap,
   },
   {
     title: "OpenAI summaries",
-    body: "Structured insight generation and validation.",
-    ready: Boolean(process.env.OPENAI_API_KEY),
+    body: "Structured insight generation and validation, managed in Convex environment settings.",
+    status: "server-managed",
     icon: Bot,
   },
   {
     title: "Apify ingestion",
-    body: "Channel resolution, metrics fetch, and ranking inputs.",
-    ready: Boolean(process.env.APIFY_API_KEY),
+    body: "Channel resolution, metrics fetch, and ranking inputs, managed in Convex environment settings.",
+    status: "server-managed",
     icon: KeyRound,
   },
-];
+] satisfies Array<{
+  title: string;
+  body: string;
+  status: IntegrationStatus;
+  icon: typeof DatabaseZap;
+}>;
+
+function getStatusBadge(status: IntegrationStatus) {
+  if (status === "connected") {
+    return {
+      label: "Connected",
+      className: "bg-[rgba(68,165,255,0.14)] text-[color:var(--brand-blue)]",
+    };
+  }
+
+  if (status === "server-managed") {
+    return {
+      label: "Server-managed",
+      className: "bg-[rgba(166,140,255,0.14)] text-[color:var(--brand-violet)]",
+    };
+  }
+
+  return {
+    label: "Pending",
+    className: "bg-white/6 text-subtle",
+  };
+}
 
 export default function AccountPage() {
   return (
@@ -41,28 +69,28 @@ export default function AccountPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        {integrations.map(({ title, body, ready, icon: Icon }) => (
-          <Card key={title} className="premium-card rounded-[1.8rem] p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex size-12 items-center justify-center rounded-[1.2rem] bg-[color:var(--surface-low)] text-[color:var(--brand-violet)]">
-                <Icon className="size-5" />
+        {integrations.map(({ title, body, status, icon: Icon }) => {
+          const badge = getStatusBadge(status);
+
+          return (
+            <Card key={title} className="premium-card rounded-[1.8rem] p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex size-12 items-center justify-center rounded-[1.2rem] bg-[color:var(--surface-low)] text-[color:var(--brand-violet)]">
+                  <Icon className="size-5" />
+                </div>
+                <div
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${badge.className}`}
+                >
+                  {badge.label}
+                </div>
               </div>
-              <div
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  ready
-                    ? "bg-[rgba(68,165,255,0.14)] text-[color:var(--brand-blue)]"
-                    : "bg-white/6 text-subtle"
-                }`}
-              >
-                {ready ? "Connected" : "Pending"}
-              </div>
-            </div>
-            <h2 className="mt-6 font-heading text-2xl tracking-[-0.04em] text-white">
-              {title}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-subtle">{body}</p>
-          </Card>
-        ))}
+              <h2 className="mt-6 font-heading text-2xl tracking-[-0.04em] text-white">
+                {title}
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-subtle">{body}</p>
+            </Card>
+          );
+        })}
       </div>
 
       <Card className="premium-card rounded-[2rem] p-6 sm:p-8">
