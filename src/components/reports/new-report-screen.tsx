@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight, Sparkles, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
@@ -162,7 +161,13 @@ export function NewReportScreen() {
               <div className="flex flex-col items-center justify-center p-6 bg-surface-container-highest rounded-2xl gap-4">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-surface-container shadow-xl">
                   {channelInfo.avatar ? (
-                    <img src={channelInfo.avatar} alt="Channel Avatar" className="w-full h-full object-cover" />
+                    <img 
+                      src={channelInfo.avatar} 
+                      alt="Channel Avatar" 
+                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-3xl font-bold bg-secondary">
                       {channelInfo.name.charAt(0)}

@@ -5,7 +5,7 @@ import { v } from "convex/values";
 
 export const channel = action({
   args: { urlInput: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     let url = args.urlInput.trim();
     if (url.startsWith("@")) {
       url = `https://www.youtube.com/${url}`;
@@ -43,8 +43,11 @@ export const channel = action({
         channelAvatarUrl: image,
         channelUrlInput: url
       };
-    } catch (e: any) {
-      return { valid: false, error: e.message || "Failed to fetch channel details." };
+    } catch (error: unknown) {
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Failed to fetch channel details.",
+      };
     }
   },
 });

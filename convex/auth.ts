@@ -5,11 +5,17 @@ import { convexAuth } from "@convex-dev/auth/server";
 
 const ResendResetProvider = Email({
   id: "resend",
-  sendVerificationRequest: async ({ identifier, token }: any) => {
+  sendVerificationRequest: async ({
+    identifier,
+    token,
+  }: {
+    identifier: string;
+    token: string;
+  }) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const resetLink = `${baseUrl}/login?step=resetPassword&code=${token}&email=${encodeURIComponent(identifier)}`;
+    const resetLink = `${baseUrl}/login?step=resetPassword&code=${encodeURIComponent(token)}&email=${encodeURIComponent(identifier)}`;
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "VidMetrics <vidmetrics@app.solventio.co>",

@@ -2,16 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export function LandingPage() {
   const router = useRouter();
   const [channelUrl, setChannelUrl] = useState("");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleAnalyze = () => {
     router.push("/login");
@@ -67,7 +62,7 @@ export function LandingPage() {
 
       {/* Navbar */}
       <header className="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
-        <div className={`flex justify-between items-center px-6 md:px-8 py-4 max-w-6xl mx-auto transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <div className="animate-fade-in-up flex max-w-6xl items-center justify-between px-6 py-4 transition-all duration-700 md:px-8">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-surface-container-highest/80 shadow-[0_0_20px_rgba(166,140,255,0.15)] flex items-center justify-center">
               <span className="material-symbols-outlined text-secondary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>insights</span>
@@ -100,25 +95,25 @@ export function LandingPage() {
           <div className="max-w-6xl mx-auto px-6 md:px-8 relative z-10">
             <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16 md:mb-20">
               {/* Badge */}
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-secondary text-xs font-bold uppercase tracking-widest mb-8 animate-pulse-glow ${mounted ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <div className="animate-fade-in-up animate-pulse-glow mb-8 inline-flex items-center gap-2 rounded-full glass-panel px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary">
                 <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
                 AI-Powered Video Intelligence
               </div>
 
               {/* Title */}
-              <h1 className={`text-5xl md:text-6xl lg:text-7xl font-headline font-extrabold tracking-tight text-white mb-6 leading-[1.08] ${mounted ? 'animate-fade-in-up delay-100' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+              <h1 className="animate-fade-in-up delay-100 mb-6 text-5xl leading-[1.08] font-headline font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl" style={{ animationFillMode: 'both' }}>
                 Analyze Any YouTube{" "}
                 <br className="hidden md:block" />
                 Channel in Seconds.
               </h1>
 
               {/* Subtitle */}
-              <p className={`text-lg text-on-surface-variant mb-10 max-w-xl leading-relaxed ${mounted ? 'animate-fade-in-up delay-200' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+              <p className="animate-fade-in-up delay-200 mb-10 max-w-xl text-lg leading-relaxed text-on-surface-variant" style={{ animationFillMode: 'both' }}>
                 Paste a channel URL and get a deep AI-powered report: top-performing videos, engagement patterns, and actionable strategy insights.
               </p>
 
               {/* Hero CTA */}
-              <div className={`flex flex-col sm:flex-row items-center gap-3 w-full max-w-lg ${mounted ? 'animate-fade-in-up delay-300' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+              <div className="animate-fade-in-up delay-300 flex w-full max-w-lg flex-col items-center gap-3 sm:flex-row" style={{ animationFillMode: 'both' }}>
                 <div className="relative flex-grow w-full group">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-secondary transition-colors">
                     <span className="material-symbols-outlined text-xl">link</span>
@@ -140,11 +135,11 @@ export function LandingPage() {
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </button>
               </div>
-              <p className={`text-xs text-outline mt-4 ${mounted ? 'animate-fade-in delay-400' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>Free to start — No credit card required</p>
+              <p className="animate-fade-in delay-400 mt-4 text-xs text-outline" style={{ animationFillMode: 'both' }}>Free to start — No credit card required</p>
             </div>
 
             {/* App Preview - Perspective Diagonal Style with Annotations */}
-            <div className={`relative ${mounted ? 'animate-fade-in-up delay-500' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+            <div className="animate-fade-in-up delay-500 relative" style={{ animationFillMode: 'both' }}>
               
               {/* Hand-drawn style annotations - left side (desktop only) */}
               <div className="hidden lg:block absolute left-0 top-8 z-20 w-56 space-y-12">

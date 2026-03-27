@@ -1,10 +1,10 @@
 # VidMetrics
 
-AI-powered YouTube channel intelligence platform. Analyze any channel in seconds — get performance scores, engagement metrics, and actionable strategy insights for every video.
+AI-powered YouTube channel intelligence platform. Analyze any channel in seconds, get performance scores, engagement metrics, and actionable strategy insights for every video.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Convex (serverless database, auth, server functions)
 - **AI**: OpenAI GPT for video analysis + strategic insights
 - **Data**: Apify for YouTube data extraction
@@ -38,15 +38,18 @@ Required variables:
 |---|---|
 | `NEXT_PUBLIC_CONVEX_URL` | Your Convex deployment URL |
 | `CONVEX_DEPLOYMENT` | Convex deployment identifier |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex HTTP actions URL |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex site URL used by auth callbacks |
+| `CONVEX_DEPLOY_KEY` | Convex deploy key for non-local builds |
+| `NEXT_PUBLIC_APP_URL` | Public app URL used in reset/report email links |
 
-Set these in your **Convex dashboard** (not in `.env.local`):
+Set these in your **Convex dashboard** (not in `.env.local` or Vercel), because the actions run on Convex:
 
 | Variable | Description |
 |---|---|
 | `OPENAI_API_KEY` | OpenAI API key for AI analysis |
-| `APIFY_API_KEY` | Apify token for YouTube scraping |
+| `APIFY_API_TOKEN` | Apify token for YouTube scraping |
 | `RESEND_API_KEY` | Resend API key for emails |
+| `RESEND_FROM_EMAIL` | Verified sender for outgoing emails |
 
 ### Development
 
@@ -100,7 +103,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Deployment
 
-Deploy to [Vercel](https://vercel.com) with your Convex project connected. Set the required environment variables in your Vercel project settings.
+Deploy to [Vercel](https://vercel.com) with your GitHub repo connected. Mirror the Convex client variables from development into Vercel, and keep the server-side AI/email secrets in the Convex dashboard.
 
 ---
 

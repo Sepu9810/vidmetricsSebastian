@@ -38,20 +38,20 @@ export function ReportsDashboard() {
           <div className="col-span-2 text-right">Actions</div>
         </div>
 
-        {reports.map((report: any) => {
+        {reports.map((report) => {
           const isComplete = report.status === "complete";
           const isGenerating = report.status === "generating" || report.status === "queued";
           const isFailed = report.status === "failed";
           
           return (
             <div
-              key={report._id || report.id}
-              onClick={() => { if (isComplete) router.push(`/reports/${report._id || report.id}`); }}
+              key={report._id}
+              onClick={() => { if (isComplete) router.push(`/reports/${report._id}`); }}
               className={`grid grid-cols-1 md:grid-cols-12 items-center px-6 py-5 bg-surface-container-low hover:bg-surface-container transition-colors rounded-2xl gap-4 ${isComplete ? 'border-l-4 border-secondary/40 cursor-pointer' : ''}`}
             >
               <div className="col-span-4 flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 ${isFailed ? 'opacity-50 grayscale' : ''}`}>
-                  {report.channelAvatarUrl ? <img src={report.channelAvatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-white">V</span>}
+                  {report.channelAvatarUrl ? <img src={report.channelAvatarUrl} alt="Avatar" crossOrigin="anonymous" referrerPolicy="no-referrer" className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-white">V</span>}
                 </div>
                 <div>
                   <p className={`font-bold ${isFailed ? 'text-on-surface-variant' : 'text-white'}`}>{report.channelName || report.channelUrlInput}</p>
@@ -102,7 +102,7 @@ export function ReportsDashboard() {
                   </>
                 ) : (
                   <>
-                    <Link href={`/reports/${report._id || report.id}`} onClick={(e) => e.stopPropagation()} className="p-2 bg-surface-variant text-on-surface rounded-lg hover:bg-secondary/20 hover:text-secondary transition-all flex items-center justify-center">
+                    <Link href={`/reports/${report._id}`} onClick={(e) => e.stopPropagation()} className="p-2 bg-surface-variant text-on-surface rounded-lg hover:bg-secondary/20 hover:text-secondary transition-all flex items-center justify-center">
                       <span className="material-symbols-outlined text-sm">visibility</span>
                     </Link>
                     <button onClick={(e) => { e.stopPropagation(); deleteReport({ reportId: report._id }); }} className="p-2 bg-surface-variant text-on-surface rounded-lg hover:text-error transition-all">

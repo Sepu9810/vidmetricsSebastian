@@ -2,7 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+type AuthStep =
+  | "signIn"
+  | "signUp"
+  | "forgotPassword"
+  | "checkEmail"
+  | "resetPassword";
+
+function normalizeAuthStep(step?: string): AuthStep {
+  if (
+    step === "signUp" ||
+    step === "forgotPassword" ||
+    step === "checkEmail" ||
+    step === "resetPassword"
+  ) {
+    return step;
+  }
+  return "signIn";
+}
 
 function getFriendlyErrorMessage(errorMsg: string, flow: string): string {
   if (!errorMsg) return "An authentication error occurred.";
@@ -31,14 +50,19 @@ function getFriendlyErrorMessage(errorMsg: string, flow: string): string {
   return errorMsg;
 }
 
-export function LoginScreen() {
-  const searchParams = useSearchParams();
-  const initialStep = (searchParams.get("step") as any) || "signIn";
-  
-  const [step, setStep] = useState<"signIn" | "signUp" | "forgotPassword" | "checkEmail" | "resetPassword">(initialStep);
-  const [email, setEmail] = useState("");
+export function LoginScreen({
+  initialStep = "signIn",
+  initialEmail = "",
+  initialResetCode = "",
+}: {
+  initialStep?: string;
+  initialEmail?: string;
+  initialResetCode?: string;
+}) {
+  const [step, setStep] = useState<AuthStep>(normalizeAuthStep(initialStep));
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [resetCode, setResetCode] = useState("");
+  const [resetCode, setResetCode] = useState(initialResetCode);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -46,9 +70,16 @@ export function LoginScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    if (searchParams.get("email")) setEmail(searchParams.get("email") || "");
-    if (searchParams.get("code")) setResetCode(searchParams.get("code") || "");
-  }, [searchParams]);
+    setStep(normalizeAuthStep(initialStep));
+  }, [initialStep]);
+
+  useEffect(() => {
+    setEmail(initialEmail);
+  }, [initialEmail]);
+
+  useEffect(() => {
+    setResetCode(initialResetCode);
+  }, [initialResetCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +97,9 @@ export function LoginScreen() {
         await signIn("password", { email, code: resetCode, newPassword: password, flow: "reset-verification" });
         router.push("/dashboard");
       }
-    } catch (err: any) {
-      setError(getFriendlyErrorMessage(err.message, step));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed.";
+      setError(getFriendlyErrorMessage(message, step));
     } finally {
       setLoading(false);
     }

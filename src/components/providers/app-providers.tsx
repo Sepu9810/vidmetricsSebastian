@@ -11,5 +11,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  return <ConvexAuthProvider client={convexClient}>{children}</ConvexAuthProvider>;
+  return (
+    <ConvexAuthProvider
+      client={convexClient}
+      shouldHandleCode={() => {
+        if (typeof window === "undefined") return true;
+        const searchParams = new URLSearchParams(window.location.search);
+        return searchParams.get("step") !== "resetPassword";
+      }}
+    >
+      {children}
+    </ConvexAuthProvider>
+  );
 }

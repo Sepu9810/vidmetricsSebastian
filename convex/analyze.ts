@@ -1,6 +1,6 @@
 "use node";
 
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import OpenAI from "openai";
@@ -13,7 +13,77 @@ function getDaysFromRange(dateRange: string) {
   return 30;
 }
 
-async function runApifyActor(token: string, actorId: string, input: any): Promise<any[]> {
+type ApifyActorRunInput = {
+  maxResults: number;
+  maxResultsShorts: number;
+  maxResultStreams: number;
+  startUrls: Array<{ url: string }>;
+};
+
+type ApifyRunData = {
+  data: {
+    defaultDatasetId: string;
+    id: string;
+    status?: string;
+  };
+};
+
+type ApifyVideoItem = {
+  channelName?: string;
+  channelUrl?: string;
+  commentsCount?: number | string;
+  date?: string;
+  duration?: string;
+  id?: string;
+  likes?: number | string;
+  thumbnailUrl?: string;
+  title?: string;
+  url?: string;
+  viewCount?: number | string;
+};
+
+type ProcessedVideo = {
+  aiAnalysis: string;
+  comments: number;
+  engagementRate: number;
+  externalVideoId: string;
+  likes: number;
+  performanceLabel: string;
+  performanceScore: number;
+  publishDate: string;
+  thumbnailUrl: string;
+  title: string;
+  videoType: "short" | "long_form";
+  viewsPeriod: number;
+  youtubeUrl: string;
+};
+
+type AiVideoAnalysis = {
+  insight?: unknown;
+  videoId?: string;
+};
+
+type AiInsightPayload = {
+  executiveSummary?: unknown;
+  formatInsights?: unknown;
+  methodologyNotes?: unknown;
+  strategicTakeaways?: unknown;
+  structurePatterns?: unknown;
+  thumbnailPatterns?: unknown;
+  titlePatterns?: unknown;
+  topicPatterns?: unknown;
+  videoAnalysis?: AiVideoAnalysis[];
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error occurred";
+}
+
+async function runApifyActor(
+  token: string,
+  actorId: string,
+  input: ApifyActorRunInput,
+): Promise<ApifyVideoItem[]> {
   const runRes = await fetch(
     `https://api.apify.com/v2/acts/${actorId}/runs?token=${token}`,
     {
@@ -28,7 +98,7 @@ async function runApifyActor(token: string, actorId: string, input: any): Promis
     throw new Error(`Apify actor start failed: ${runRes.status} ${errText}`);
   }
 
-  const runData = await runRes.json();
+  const runData = (await runRes.json()) as ApifyRunData;
   const runId = runData.data.id;
   const datasetId = runData.data.defaultDatasetId;
 
@@ -38,7 +108,7 @@ async function runApifyActor(token: string, actorId: string, input: any): Promis
     const statusRes = await fetch(
       `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`
     );
-    const statusData = await statusRes.json();
+    const statusData = (await statusRes.json()) as ApifyRunData;
     const st = statusData.data.status;
     if (st === "SUCCEEDED") break;
     if (st === "FAILED" || st === "ABORTED" || st === "TIMED-OUT") {
@@ -51,10 +121,10 @@ async function runApifyActor(token: string, actorId: string, input: any): Promis
     `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&format=json`
   );
   if (!dataRes.ok) throw new Error("Failed to fetch Apify dataset");
-  return dataRes.json();
+  return (await dataRes.json()) as ApifyVideoItem[];
 }
 
-export const generateReportAction = action({
+export const generateReportAction = internalAction({
   args: {
     reportId: v.id("reports"),
     channelUrlInput: v.string(),
@@ -103,7 +173,7 @@ export const generateReportAction = action({
       }
 
       // Extract channel info from the first video
-      const first = datasetItems[0] as any;
+      const first = datasetItems[0];
       const channelName = first.channelName || urlInput.split("/").pop() || "Unknown";
       const channelHandle = first.channelUrl
         ? first.channelUrl.replace("http://www.youtube.com/", "").replace("https://www.youtube.com/", "")
@@ -123,25 +193,26 @@ export const generateReportAction = action({
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysCutoff);
 
-      const filteredVideos = datasetItems
-        .filter((v: any) => {
-          if (!v.date) return true;
-          return new Date(v.date) >= cutoffDate;
+      const filteredVideos: ProcessedVideo[] = datasetItems
+        .filter((video) => {
+          const videoDate = video.date;
+          if (!videoDate) return true;
+          return new Date(videoDate) >= cutoffDate;
         })
-        .map((v: any) => {
-          const views = Number(v.viewCount || 0);
-          const likes = Number(v.likes || 0);
-          const comments = Number(v.commentsCount || 0);
+        .map((video) => {
+          const views = Number(video.viewCount || 0);
+          const likes = Number(video.likes || 0);
+          const comments = Number(video.commentsCount || 0);
           const engRate = views > 0 ? ((likes + comments) / views) * 100 : 0;
           const rawScore = views * Math.max(engRate, 0.1);
 
           // Detect shorts by duration (under 61 seconds) or URL
           let videoType: "short" | "long_form" = "long_form";
-          if (v.url && v.url.includes("/shorts/")) {
+          if (video.url && video.url.includes("/shorts/")) {
             videoType = "short";
-          } else if (v.duration) {
+          } else if (video.duration) {
             // duration format: "HH:MM:SS" or "MM:SS"
-            const parts = v.duration.split(":").map(Number);
+            const parts = video.duration.split(":").map(Number);
             const totalSecs =
               parts.length === 3
                 ? parts[0] * 3600 + parts[1] * 60 + parts[2]
@@ -152,10 +223,10 @@ export const generateReportAction = action({
           }
 
           return {
-            externalVideoId: v.id || "unknown",
-            title: v.title || "Untitled",
-            thumbnailUrl: v.thumbnailUrl || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
-            publishDate: v.date || new Date().toISOString(),
+            externalVideoId: video.id || "unknown",
+            title: video.title || "Untitled",
+            thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`,
+            publishDate: video.date || new Date().toISOString(),
             videoType,
             viewsPeriod: views,
             likes,
@@ -163,7 +234,7 @@ export const generateReportAction = action({
             engagementRate: Number(engRate.toFixed(2)),
             performanceScore: rawScore,
             performanceLabel: "Average",
-            youtubeUrl: v.url || `https://youtube.com/watch?v=${v.id}`,
+            youtubeUrl: video.url || `https://youtube.com/watch?v=${video.id}`,
             aiAnalysis: "",
           };
         });
@@ -173,15 +244,15 @@ export const generateReportAction = action({
       }
 
       // ─── 3. Normalize scores 0-100 ───
-      const maxScore = Math.max(...filteredVideos.map((v: any) => v.performanceScore));
-      filteredVideos.forEach((v: any) => {
-        v.performanceScore = maxScore > 0 ? Math.round((v.performanceScore / maxScore) * 100) : 0;
-        if (v.performanceScore > 75) v.performanceLabel = "High";
-        else if (v.performanceScore > 35) v.performanceLabel = "Medium";
-        else v.performanceLabel = "Low";
+      const maxScore = Math.max(...filteredVideos.map((video) => video.performanceScore));
+      filteredVideos.forEach((video) => {
+        video.performanceScore = maxScore > 0 ? Math.round((video.performanceScore / maxScore) * 100) : 0;
+        if (video.performanceScore > 75) video.performanceLabel = "High";
+        else if (video.performanceScore > 35) video.performanceLabel = "Medium";
+        else video.performanceLabel = "Low";
       });
 
-      filteredVideos.sort((a: any, b: any) => b.performanceScore - a.performanceScore);
+      filteredVideos.sort((a, b) => b.performanceScore - a.performanceScore);
       const topVideos = filteredVideos.slice(0, 10);
 
       await ctx.runMutation(internal.reports.updateReportStatus, {
@@ -192,8 +263,8 @@ export const generateReportAction = action({
       });
 
       // ─── 4. OpenAI Analysis ───
-      const videoSummary = topVideos.map((v: any, i: number) =>
-        `#${i + 1} "${v.title}" | Views: ${v.viewsPeriod} | Likes: ${v.likes} | Comments: ${v.comments} | Eng: ${v.engagementRate}% | Type: ${v.videoType} | Date: ${v.publishDate}`
+      const videoSummary = topVideos.map((video, i) =>
+        `#${i + 1} "${video.title}" | Views: ${video.viewsPeriod} | Likes: ${video.likes} | Comments: ${video.comments} | Eng: ${video.engagementRate}% | Type: ${video.videoType} | Date: ${video.publishDate}`
       ).join("\n");
 
       const prompt = `You are a YouTube strategist. Analyze these top performing videos from channel "${channelName}" and produce strategic insights.
@@ -224,21 +295,23 @@ Respond STRICTLY in valid JSON with these keys:
       });
 
       const aiContent = aiResponse.choices[0].message.content || "{}";
-      const aiJson = JSON.parse(aiContent);
+      const aiJson = JSON.parse(aiContent) as AiInsightPayload;
 
       // ─── 5. Save everything to Convex ───
-      const safeString = (val: any, fallback: string) => {
+      const safeString = (val: unknown, fallback: string) => {
         if (!val) return fallback;
         if (Array.isArray(val)) return val.join("\n• ");
         return String(val);
       };
 
       if (aiJson.videoAnalysis && Array.isArray(aiJson.videoAnalysis)) {
-        for (const v of topVideos) {
-           const match = aiJson.videoAnalysis.find((a: any) => a.videoId === v.externalVideoId);
-           if (match) {
-             v.aiAnalysis = safeString(match.insight, "");
-           }
+        for (const video of topVideos) {
+          const match = aiJson.videoAnalysis.find(
+            (analysis) => analysis.videoId === video.externalVideoId,
+          );
+          if (match) {
+            video.aiAnalysis = safeString(match.insight, "");
+          }
         }
       }
 
@@ -297,18 +370,18 @@ Respond STRICTLY in valid JSON with these keys:
               html: emailHtml,
             });
           }
-        } catch (e) {
-          console.error("Failed to send email:", e);
+        } catch (error) {
+          console.error("Failed to send email:", error);
         }
       }
-    } catch (e: any) {
-      console.error("generateReportAction error:", e);
+    } catch (error) {
+      console.error("generateReportAction error:", error);
       await ctx.runMutation(internal.reports.updateReportStatus, {
         reportId: args.reportId,
         status: "failed",
         progressPercent: 0,
         progressStage: "Failed",
-        errorMessage: e.message || "Unknown error occurred",
+        errorMessage: getErrorMessage(error),
       });
     }
   },
