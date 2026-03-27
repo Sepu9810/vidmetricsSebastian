@@ -49,3 +49,4 @@ next-env.d.ts
 # ai agent files
 CLAUDE.md
 .gemini/
+.env*.local
