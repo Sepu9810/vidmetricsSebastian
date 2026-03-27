@@ -11,6 +11,7 @@
 import type * as analyze from "../analyze.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as lib_appUrl from "../lib/appUrl.js";
 import type * as reports from "../reports.js";
 import type * as users from "../users.js";
 import type * as verify from "../verify.js";
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   analyze: typeof analyze;
   auth: typeof auth;
   http: typeof http;
+  "lib/appUrl": typeof lib_appUrl;
   reports: typeof reports;
   users: typeof users;
   verify: typeof verify;

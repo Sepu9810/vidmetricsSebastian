@@ -2,7 +2,7 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend } from "resend";
 import { convexAuth } from "@convex-dev/auth/server";
-import { getAppUrl } from "./lib/app-url";
+import { getAppUrl } from "./lib/appUrl";
 
 const ResendResetProvider = Email({
   id: "resend",

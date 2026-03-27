@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import OpenAI from "openai";
 import { Resend } from "resend";
-import { getAppUrl } from "./lib/app-url";
+import { getAppUrl } from "./lib/appUrl";
 
 function getDaysFromRange(dateRange: string) {
   if (dateRange === "7d") return 7;
