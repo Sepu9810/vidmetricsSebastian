@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VidMetrics
+
+AI-powered YouTube channel intelligence platform. Analyze any channel in seconds — get performance scores, engagement metrics, and actionable strategy insights for every video.
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Convex (serverless database, auth, server functions)
+- **AI**: OpenAI GPT for video analysis + strategic insights
+- **Data**: Apify for YouTube data extraction
+- **Email**: Resend for transactional emails (report notifications, password reset)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- A [Convex](https://convex.dev) account
+- API keys for: OpenAI, Apify, Resend
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy the example env file and fill in your values:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+Required variables:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_CONVEX_URL` | Your Convex deployment URL |
+| `CONVEX_DEPLOYMENT` | Convex deployment identifier |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex HTTP actions URL |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Set these in your **Convex dashboard** (not in `.env.local`):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Description |
+|---|---|
+| `OPENAI_API_KEY` | OpenAI API key for AI analysis |
+| `APIFY_API_KEY` | Apify token for YouTube scraping |
+| `RESEND_API_KEY` | Resend API key for emails |
 
-## Deploy on Vercel
+### Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Start the Convex dev server + Next.js
+npx convex dev
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+├── convex/              # Backend (Convex functions, schema, auth)
+│   ├── auth.ts          # Authentication configuration
+│   ├── schema.ts        # Database schema
+│   ├── reports.ts       # Report queries & mutations
+│   ├── analyze.ts       # AI analysis pipeline
+│   ├── users.ts         # User queries
+│   └── verify.ts        # Email verification
+├── public/              # Static assets
+│   ├── favicon.png      # App icon
+│   └── app-preview.png  # Landing page screenshot
+├── src/
+│   ├── app/             # Next.js App Router pages
+│   │   ├── (app)/       # Authenticated routes (dashboard, reports)
+│   │   ├── login/       # Authentication page
+│   │   └── page.tsx     # Landing page
+│   ├── components/
+│   │   ├── auth/        # Login & auth components
+│   │   ├── brand/       # Logo & branding
+│   │   ├── layout/      # App shell, navigation
+│   │   ├── marketing/   # Landing page
+│   │   ├── providers/   # React context providers
+│   │   ├── reports/     # Report screens & cards
+│   │   ├── shared/      # Reusable UI (StatusPill, etc.)
+│   │   └── ui/          # shadcn/ui primitives
+│   └── lib/             # Utilities & helpers
+```
+
+## Features
+
+- 🔐 Email/password authentication with magic-link password reset
+- 📊 AI-powered channel analysis with performance scoring
+- 🎯 Per-video AI insights (hooks, patterns, engagement drivers)
+- ⚡ Shorts vs Long-form content comparison
+- 📧 Email notifications when reports are ready
+- 📥 Download reports as standalone HTML files
+- 📱 Fully responsive (mobile, tablet, desktop)
+
+## Deployment
+
+Deploy to [Vercel](https://vercel.com) with your Convex project connected. Set the required environment variables in your Vercel project settings.
+
+---
+
+Developed by **Sebastián Sepúlveda**
