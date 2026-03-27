@@ -21,10 +21,13 @@ import {
   Zap,
   Sparkles,
   Percent,
+  ArrowUpDown,
+  Funnel,
 } from "lucide-react";
 
 import { StatusPill } from "@/components/shared/status-pill";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const metricIcons = [Play, TrendingUp, Trophy, Zap];
 const insightIcons = [Lightbulb, Target, MessageSquare, Tv, BarChart3, Zap];
@@ -33,6 +36,8 @@ const PDF_BACKGROUND_RGB: [number, number, number] = [14, 14, 14];
 const UNSUPPORTED_COLOR_FUNCTION_PATTERN = /(oklab|oklch|color-mix|lab\(|lch\(|color\()/i;
 
 type ReportStatus = "complete" | "generating" | "failed" | "queued";
+type VideoSortOption = "performance" | "views" | "likes" | "comments";
+type VideoFilterOption = "all" | "short" | "long_form";
 
 type ReportVideo = {
   aiAnalysis?: string;
@@ -71,6 +76,19 @@ type ReportDetailData = {
   videos?: ReportVideo[];
 };
 
+const videoSortOptions: Array<{ label: string; value: VideoSortOption }> = [
+  { label: "Performance", value: "performance" },
+  { label: "Views", value: "views" },
+  { label: "Likes", value: "likes" },
+  { label: "Comments", value: "comments" },
+];
+
+const videoFilterOptions: Array<{ label: string; value: VideoFilterOption }> = [
+  { label: "Both", value: "all" },
+  { label: "Shorts", value: "short" },
+  { label: "Long-form", value: "long_form" },
+];
+
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const percent = Math.min((value / max) * 100, 100);
   return (
@@ -85,6 +103,42 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color:
 
 function sanitizeFilenameSegment(value: string) {
   return value.replace(/[^a-zA-Z0-9]/g, "_");
+}
+
+function getVideoSortValue(video: ReportVideo, sortBy: VideoSortOption) {
+  switch (sortBy) {
+    case "views":
+      return video.viewsPeriod ?? 0;
+    case "likes":
+      return video.likes ?? 0;
+    case "comments":
+      return video.comments ?? 0;
+    case "performance":
+    default:
+      return video.performanceScore;
+  }
+}
+
+function getTopPerformanceScore(videos: ReportVideo[] = []) {
+  return videos.reduce((highest, video) => Math.max(highest, video.performanceScore), 0);
+}
+
+function getVisibleVideos(
+  videos: ReportVideo[] = [],
+  filterByType: VideoFilterOption,
+  sortBy: VideoSortOption
+) {
+  return videos
+    .filter((video) => filterByType === "all" || video.videoType === filterByType)
+    .sort((left, right) => {
+      const primarySort = getVideoSortValue(right, sortBy) - getVideoSortValue(left, sortBy);
+
+      if (primarySort !== 0) {
+        return primarySort;
+      }
+
+      return right.performanceScore - left.performanceScore;
+    });
 }
 
 function buildPdfImageUrl(source?: string | null) {
@@ -194,12 +248,22 @@ function createPdfExportStage(source: HTMLDivElement) {
 
 function ReportSections({
   report,
+  displayVideos,
   exportMode,
+  filterByType,
+  onFilterByTypeChange,
+  onSortByChange,
   resolveImageSrc,
+  sortBy,
 }: {
   report: ReportDetailData;
+  displayVideos: ReportVideo[];
   exportMode: boolean;
+  filterByType: VideoFilterOption;
+  onFilterByTypeChange?: (value: VideoFilterOption) => void;
+  onSortByChange?: (value: VideoSortOption) => void;
   resolveImageSrc: (source?: string | null) => string | undefined;
+  sortBy: VideoSortOption;
 }) {
   const detailMetrics = [
     {
@@ -209,7 +273,7 @@ function ReportSections({
     },
     {
       label: "Top score",
-      value: String(report.videos?.[0]?.performanceScore || 0),
+      value: String(getTopPerformanceScore(report.videos)),
       detail: "Highest video performance",
     },
     {
@@ -257,7 +321,7 @@ function ReportSections({
     },
   ];
 
-  const topVideos = report.videos || [];
+  const topVideos = displayVideos;
   const cardMotionClass = exportMode ? "" : "group hover:scale-[1.02] transition-transform";
   const insightMotionClass = exportMode ? "" : "group hover:scale-[1.01] transition-transform";
 
@@ -309,15 +373,84 @@ function ReportSections({
         className="premium-card rounded-2xl p-6 sm:p-8"
         style={exportMode ? { breakInside: "avoid" } : undefined}
       >
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
-            <Trophy className="size-5 text-secondary" />
+        <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
+              <Trophy className="size-5 text-secondary" />
+            </div>
+            <div>
+              <h2 className="font-heading text-lg font-semibold text-white">
+                Top Performing Videos
+              </h2>
+              <p className="mt-1 text-xs text-subtle">
+                Showing {topVideos.length} of {report.videos?.length || 0} videos
+              </p>
+            </div>
           </div>
-          <h2 className="font-heading text-lg font-semibold text-white">
-            Top Performing Videos
-          </h2>
+
+          {!exportMode && onSortByChange && onFilterByTypeChange && (
+            <div
+              data-html2canvas-ignore="true"
+              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+            >
+              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+                <div className="flex items-center gap-1.5 px-3 text-xs font-medium text-subtle">
+                  <ArrowUpDown className="size-3.5" />
+                  Sort
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {videoSortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => onSortByChange(option.value)}
+                      aria-pressed={sortBy === option.value}
+                      className={cn(
+                        "rounded-xl px-3 py-2 text-xs font-semibold transition-colors",
+                        sortBy === option.value
+                          ? "bg-secondary text-white"
+                          : "text-subtle hover:bg-white/5 hover:text-white"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+                <div className="flex items-center gap-1.5 px-3 text-xs font-medium text-subtle">
+                  <Funnel className="size-3.5" />
+                  Filter
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {videoFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => onFilterByTypeChange(option.value)}
+                      aria-pressed={filterByType === option.value}
+                      className={cn(
+                        "rounded-xl px-3 py-2 text-xs font-semibold transition-colors",
+                        filterByType === option.value
+                          ? "bg-secondary text-white"
+                          : "text-subtle hover:bg-white/5 hover:text-white"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="space-y-4">
+          {topVideos.length === 0 && (
+            <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-8 text-center text-sm text-subtle">
+              No videos match the selected filter.
+            </div>
+          )}
           {topVideos.map((video: ReportVideo, index: number) => {
             const barColor =
               index === 0
@@ -463,17 +596,27 @@ function ReportSections({
 }
 
 function ReportOverview({
+  displayVideos,
   report,
   exportMode,
+  filterByType,
   isDownloading,
   onDownload,
+  onFilterByTypeChange,
+  onSortByChange,
   resolveImageSrc,
+  sortBy,
 }: {
+  displayVideos: ReportVideo[];
   report: ReportDetailData;
   exportMode: boolean;
+  filterByType: VideoFilterOption;
   isDownloading: boolean;
   onDownload?: () => void;
+  onFilterByTypeChange?: (value: VideoFilterOption) => void;
+  onSortByChange?: (value: VideoSortOption) => void;
   resolveImageSrc: (source?: string | null) => string | undefined;
+  sortBy: VideoSortOption;
 }) {
   const channelAvatarSrc = resolveImageSrc(report.channelAvatarUrl);
 
@@ -546,9 +689,14 @@ function ReportOverview({
       </div>
 
       <ReportSections
+        displayVideos={displayVideos}
         report={report}
         exportMode={exportMode}
+        filterByType={filterByType}
+        onFilterByTypeChange={onFilterByTypeChange}
+        onSortByChange={onSortByChange}
         resolveImageSrc={resolveImageSrc}
+        sortBy={sortBy}
       />
     </div>
   );
@@ -558,6 +706,8 @@ export function ReportDetailScreen({ reportId }: { reportId: Id<"reports"> }) {
   const report = useQuery(api.reports.getReportDetails, { reportId });
   const pdfRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [sortBy, setSortBy] = useState<VideoSortOption>("performance");
+  const [filterByType, setFilterByType] = useState<VideoFilterOption>("all");
 
   if (report === undefined) {
     return <div className="p-8 text-white">Loading report...</div>;
@@ -568,6 +718,7 @@ export function ReportDetailScreen({ reportId }: { reportId: Id<"reports"> }) {
   }
 
   const loadedReport = report as ReportDetailData;
+  const visibleVideos = getVisibleVideos(loadedReport.videos, filterByType, sortBy);
 
   if (
     loadedReport.status === "queued" ||
@@ -668,11 +819,16 @@ export function ReportDetailScreen({ reportId }: { reportId: Id<"reports"> }) {
   return (
     <>
       <ReportOverview
+        displayVideos={visibleVideos}
         report={loadedReport}
         exportMode={false}
+        filterByType={filterByType}
         isDownloading={isDownloading}
         onDownload={handleDownload}
+        onFilterByTypeChange={setFilterByType}
+        onSortByChange={setSortBy}
         resolveImageSrc={(source) => source || undefined}
+        sortBy={sortBy}
       />
 
       <div
@@ -685,10 +841,13 @@ export function ReportDetailScreen({ reportId }: { reportId: Id<"reports"> }) {
           style={{ width: PDF_EXPORT_WIDTH }}
         >
           <ReportOverview
+            displayVideos={visibleVideos}
             report={loadedReport}
             exportMode={true}
+            filterByType={filterByType}
             isDownloading={false}
             resolveImageSrc={buildPdfImageUrl}
+            sortBy={sortBy}
           />
         </div>
       </div>
