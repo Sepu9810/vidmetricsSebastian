@@ -2,6 +2,7 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { Email } from "@convex-dev/auth/providers/Email";
 import { Resend } from "resend";
 import { convexAuth } from "@convex-dev/auth/server";
+import { getAppUrl } from "./lib/app-url";
 
 const ResendResetProvider = Email({
   id: "resend",
@@ -14,7 +15,7 @@ const ResendResetProvider = Email({
   }) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const resetLink = `${baseUrl}/login?step=resetPassword&code=${encodeURIComponent(token)}&email=${encodeURIComponent(identifier)}`;
 
     await resend.emails.send({

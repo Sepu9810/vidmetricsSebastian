@@ -61,8 +61,8 @@ export function LandingPage() {
       `}</style>
 
       {/* Navbar */}
-      <header className="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
-        <div className="animate-fade-in-up flex max-w-6xl items-center justify-between px-6 py-4 transition-all duration-700 md:px-8">
+      <header className="fixed inset-x-0 top-0 z-50 glass-panel border-b border-white/5">
+        <div className="animate-fade-in-up mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 transition-all duration-700 md:px-8">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-surface-container-highest/80 shadow-[0_0_20px_rgba(166,140,255,0.15)] flex items-center justify-center">
               <span className="material-symbols-outlined text-secondary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>insights</span>

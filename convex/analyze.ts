@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import OpenAI from "openai";
 import { Resend } from "resend";
+import { getAppUrl } from "./lib/app-url";
 
 function getDaysFromRange(dateRange: string) {
   if (dateRange === "7d") return 7;
@@ -337,7 +338,7 @@ Respond STRICTLY in valid JSON with these keys:
           if (reportDetails?.email) {
             const resend = new Resend(process.env.RESEND_API_KEY);
             const fromEmail = process.env.RESEND_FROM_EMAIL || "VidMetrics <vidmetrics@app.solventio.co>";
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+            const baseUrl = getAppUrl();
             const reportLink = `${baseUrl}/reports/${args.reportId}`;
 
             const emailHtml = `

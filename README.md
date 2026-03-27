@@ -40,16 +40,19 @@ Required variables:
 | `CONVEX_DEPLOYMENT` | Convex deployment identifier |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex site URL used by auth callbacks |
 | `CONVEX_DEPLOY_KEY` | Convex deploy key for non-local builds |
-| `NEXT_PUBLIC_APP_URL` | Public app URL used in reset/report email links |
+| `NEXT_PUBLIC_APP_URL` | Public app URL used in the frontend and in reset/report email links |
 
-Set these in your **Convex dashboard** (not in `.env.local` or Vercel), because the actions run on Convex:
+Set these in your **Convex dashboard** because the actions run on Convex:
 
 | Variable | Description |
 |---|---|
+| `NEXT_PUBLIC_APP_URL` | Same production URL used by the web app, required for reset/report email links |
 | `OPENAI_API_KEY` | OpenAI API key for AI analysis |
 | `APIFY_API_TOKEN` | Apify token for YouTube scraping |
 | `RESEND_API_KEY` | Resend API key for emails |
 | `RESEND_FROM_EMAIL` | Verified sender for outgoing emails |
+
+Mirror `NEXT_PUBLIC_APP_URL` into Vercel as well so the frontend build and Convex emails use the same canonical URL.
 
 ### Development
 
